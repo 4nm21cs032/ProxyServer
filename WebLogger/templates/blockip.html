@@ -5,26 +5,80 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='blockip.css') }}">
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 </head>
-<body>
+<body style="overflow-x: hidden;">
     <h1>Block IP</h1>
     <div class="formdiv">
         <div class="formcontainer">
             <form id="blockIpForm">
-                <label for="ip">Enter IP address to block:</label>
-                <input type="text" id="ip" name="ip" placeholder="Enter IP address" required>
+                <label for="ip">Enter domain name to block:</label>
+                <input type="text" id="ip" name="ip" placeholder="Enter domain name" required>
                 <button type="submit">Block IP</button>
             </form>
         </div>
     </div>
 
+    <h2>Blocked Domains</h2>
+    <div class="blocked-ips">
+        <div id="blockedIpsList"></div>
+    </div>
+
+
     <script>
         var socket = io();
+        function loadBlockedIPs() {
+            fetch('/get_blocked_ips')
+                .then(response => response.json())
+                .then(data => {
+                    const blockedIpsList = document.getElementById('blockedIpsList');
+                    blockedIpsList.innerHTML = '';
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'blocked-ip-entry';
+                        div.innerHTML = `
+                            <span>IP: ${item.ip} | Domain: ${item.domain}</span>
+                            <button class="unblock-btn" onclick="unblockIP('${item.ip}')">Unblock</button>
+                        `;
+                        blockedIpsList.appendChild(div);
+                    });
+                });
+        }
+
+        function unblockIP(ip) {
+            fetch('/unblock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ 'ip': ip })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    loadBlockedIPs();
+                }
+                if (data.error) {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An unexpected error occurred!');
+            });
+        }
+
         socket.on('block_ip', function(data) {
             console.log('Blocked IP:', data.ip);
+            loadBlockedIPs();
+        });
+
+        socket.on('unblock_ip', function(data) {
+            console.log('Unblocked IP:', data.ip);
+            loadBlockedIPs();
         });
 
         document.getElementById('blockIpForm').addEventListener('submit', function(event) {
-            event.preventDefault(); 
+            event.preventDefault();
             var ip = document.getElementById('ip').value;
 
             fetch('/block', {
@@ -34,13 +88,14 @@
                 },
                 body: new URLSearchParams({ 'ip': ip })
             })
-            .then(response => response.json())  
+            .then(response => response.json())
             .then(data => {
                 if (data.message) {
-                    alert(data.message);  
+                    alert(data.message);
+                    loadBlockedIPs();
                 }
                 if (data.error) {
-                    alert(data.error); 
+                    alert(data.error);
                 }
             })
             .catch(error => {
@@ -48,6 +103,7 @@
                 alert('An unexpected error occurred!');
             });
         });
+        loadBlockedIPs();
     </script>
 </body>
 </html>

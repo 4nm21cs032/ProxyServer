@@ -5,9 +5,6 @@ body {
     padding: 0;
     height: 100vh;
 }
-
-
-
 h1 {
     text-align: center;
     padding: 20px;
@@ -21,7 +18,7 @@ h1 {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 50vh;
+    height: 30vh;
 }
 
 .form-container {
@@ -39,8 +36,6 @@ h1 {
     width: 30%;
     text-align: center;
 }
-
-/* Styling the form elements */
 label {
     display: block;
     margin-bottom: 8px;
@@ -86,4 +81,53 @@ footer {
     font-size: 14px;
     color: #777;
     text-align: center;
+}
+
+.blocked-ips {
+    margin-top: 10px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+h2 {
+    color: #2d3748;
+    margin: 1rem 0;
+    font-size: 1.8rem;
+    text-align: left;
+    padding-left:10% ;
+}
+
+#blockedIpsList {
+    width: 75%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.blocked-ip-entry {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.blocked-ip-entry span {
+    color: #2d3748;
+    font-weight: 500;
+}
+
+.unblock-btn {
+    background-color: #f94545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }

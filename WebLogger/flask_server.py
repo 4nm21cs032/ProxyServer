@@ -9,7 +9,7 @@ socketio = SocketIO(app)
 
 logs = []
 IP_FILE_PATH = os.path.join(os.path.dirname(__file__), '..', 'ProxyServer', 'blocked_ips.txt')
-
+dns_entries={}
 
 @app.route('/log', methods=['POST'])
 def log():
@@ -89,6 +89,41 @@ def get_ip_from_domain(dm):
     except socket.gaierror:
         return "error"
 
+@app.route('/get_blocked_ips')
+def get_blocked_ips():
+    blocked_ips = []
+    try:
+        with open(IP_FILE_PATH, 'r') as f:
+            ips = f.readlines()
+            for ip in ips:
+                ip = ip.strip()
+                domain = dns_entries.get(ip,"Unknown")
+                blocked_ips.append({"ip": ip,"domain": domain})
+    except FileNotFoundError:
+        pass
+    return jsonify(blocked_ips)
+
+
+@app.route('/unblock', methods=['POST'])
+def unblock_ip():
+    ip_to_unblock = request.form.get('ip')
+    try:
+        with open(IP_FILE_PATH, 'r') as f:
+            ips = f.readlines()
+        
+        with open(IP_FILE_PATH, 'w') as f:
+            for ip in ips:
+                if ip.strip() != ip_to_unblock:
+                    f.write(ip)
+        
+        if ip_to_unblock in dns_entries:
+            del dns_entries[ip_to_unblock]
+            
+        socketio.emit('unblock_ip', {'ip': ip_to_unblock})
+        return jsonify({"message": f"IP {ip_to_unblock} has been unblocked successfully!"})
+    except Exception as e:
+        return jsonify({"error": f"An error occurred while unblocking the IP: {e}"})
+    
 @app.route('/')
 def index():
     return render_template('weblogger.html', logs=logs)
@@ -105,12 +140,13 @@ def block_site():
         if ip_address=="error":
             return jsonify({"error": f"An error occurred while blocking the IP"})
         try:
-            with open(IP_FILE_PATH, 'a') as f:
+            with open(IP_FILE_PATH,'a') as f:
                 f.write(f"{ip_address}\n")
-            socketio.emit('block_ip', {'ip': ip_address})
+            dns_entries[ip_address]=domain_name
+            socketio.emit('block_ip',{'ip':ip_address})
             return jsonify({"message": f"IP {ip_address} has been blocked successfully!"})
         except Exception as e:
-            return jsonify({"error": f"An error occurred while blocking the IP: {e}"})
+            return jsonify({"error":f"An error occurred while blocking the IP:{e}"})
     return render_template('blockip.html')
 
 if __name__ == '__main__':
